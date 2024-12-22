@@ -1,4 +1,0 @@
-Already up to date.
-go: errors parsing go.mod:
-/Users/zmj/Desktop/projects/std-api/go.mod:3: invalid go version '1.23.2': must match format 1.23
-make: *** [build] Error 1
