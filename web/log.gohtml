@@ -14,7 +14,11 @@
 <script>
     var id = "{{ .id }}";
     var typ = "{{ .typ }}";
-    var conn = new WebSocket("ws://" + window.location.host + "/ws?id=" + id + "&typ=" + typ)
+    var protocol = "ws://"
+    if(window.location.protocol == "https:") {
+        protocol = "wss://"
+    }
+    var conn = new WebSocket(protocol + window.location.host + "/ws?id=" + id + "&typ=" + typ)
     heartBeat = function () {
         if (conn) {
             conn.send("p");
