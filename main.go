@@ -41,6 +41,7 @@ func init() {
 }
 
 func main() {
+	flag.Parse()
 	if err := xconfig.ParseFromFile(configFile, &config); err != nil {
 		panic(err)
 	}
