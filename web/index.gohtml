@@ -39,16 +39,10 @@
                 <td>{{ .Name }}</td>
                 <td>{{ .Status }}</td>
                 <td>
-                    {{ if eq .Status "未构建" }}
-                        <a href="/build?id={{ .Id }}">构建并部署</a>
-                    {{ end }}
+                    <a href="/build?id={{ .Id }}">构建并部署</a>
                     <a href="/deploy?id={{ .Id }}">重新部署</a>
-                    {{ if eq .Status "构建中" }}
-                        <a href="/logs?typ=build&&id={{ .Id }}">查看构建日志</a>
-                    {{ end }}
-                    {{ if eq .Status "构建中" }}
-                        <a href="/logs?typ=deploy&id={{ .Id }}">查看部署日志</a>
-                    {{ end }}
+                    <a href="/logs?typ=build&&id={{ .Id }}">查看构建日志</a>
+                    <a href="/logs?typ=deploy&id={{ .Id }}">查看部署日志</a>
                 </td>
             </tr>
         {{ end }}
