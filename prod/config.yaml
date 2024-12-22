@@ -3,7 +3,18 @@ services:
     name: kf-api
     path: /www/kf-api
     buildScript: |
+      set -ex
       git pull 
       make build-image
     deployScript: |
       docker compose stop && docker compose rm -f && docker compose up -d
+  - id: kf-manager
+    name: kf-manager
+    path: /www/kf-manager-dist
+    buildScript: |
+      set -ex
+      git pull
+    deployScript: |
+      set -ex
+      git pull
+      echo 'already deployed'
