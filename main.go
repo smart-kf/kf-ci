@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -98,6 +99,14 @@ func main() {
 			"id":  id,
 			"typ": typ,
 		})
+	})
+
+	g.Any("/githook", func(ctx *gin.Context) {
+		data, _ := ioutil.ReadAll(ctx.Request.Body)
+		ctx.Request.Body = ioutil.NopCloser(bytes.NewReader(data))
+
+		fmt.Println(string(data))
+		ctx.String(200, "ok")
 	})
 
 	var upgrader = websocket.Upgrader{
