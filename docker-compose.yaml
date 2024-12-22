@@ -1,0 +1,10 @@
+services:
+  ci:
+    image: kf-ci:latest
+    volumes:
+      - ./prod/config.yaml:/app/config.yaml
+    command:
+      - /app/app
+    ports:
+      - "8083:8083"
+    restart: always

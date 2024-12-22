@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<style>
+    td {
+        text-align: center;
+        padding: 5px 10px;
+    }
+</style>
+<div id="main">
+    <table border="1">
+        <thead>
+        <tr>
+            <td>
+                Id
+            </td>
+            <td>
+                服务名称
+            </td>
+            <td>
+                状态
+            </td>
+            <td>
+                操作
+            </td>
+        </tr>
+        </thead>
+        <tbody>
+        {{ range .services }}
+            <tr>
+                <td>{{ .Id }}</td>
+                <td>{{ .Name }}</td>
+                <td>{{ .Status }}</td>
+                <td>
+                    {{ if eq .Status "未构建" }}
+                        <a href="/build?id={{ .Id }}">构建并部署</a>
+                    {{ end }}
+                    <a href="/deploy?id={{ .Id }}">重新部署</a>
+                    {{ if eq .Status "构建中" }}
+                        <a href="/logs?typ=build&&id={{ .Id }}">查看构建日志</a>
+                    {{ end }}
+                    {{ if eq .Status "构建中" }}
+                        <a href="/logs?typ=deploy&id={{ .Id }}">查看部署日志</a>
+                    {{ end }}
+                </td>
+            </tr>
+        {{ end }}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

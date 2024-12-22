@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<div class="container" id="app">
+    <a href="javascript:history.go(-1)">返回</a>
+</div>
+<script>
+    var id = "{{ .id }}";
+    var typ = "{{ .typ }}";
+    var conn = new WebSocket("ws://" + window.location.host + "/ws?id=" + id + "&typ=" + typ)
+    heartBeat = function () {
+        if (conn) {
+            conn.send("p");
+        }
+    }
+    conn.onopen = function () {
+        conn.send("p");
+        setInterval(heartBeat, 30000)
+    }
+    conn.onclose = function () {
+        conn = null;
+    }
+    conn.onmessage = function (e) {
+        // 创建新的 <p> 元素
+        const newParagraph = document.createElement('p');
+        newParagraph.textContent = e.data;
+        // 将 <p> 元素追加到 <div>
+        document.getElementById('app').appendChild(newParagraph);
+        console.log(e)
+    }
+</script>
+</body>
+</html>
