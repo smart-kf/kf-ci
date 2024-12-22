@@ -107,6 +107,7 @@ func main() {
 			return
 		}
 
+		fmt.Println("receive hook: ", req.Repository.Name, req.Ref)
 		ref := req.Ref
 		if !isMaster(ref) {
 			ctx.String(200, "ok")
