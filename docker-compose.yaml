@@ -4,7 +4,7 @@ services:
     volumes:
       - ./prod/config.yaml:/app/config.yaml
     command:
-      - /app/app
+      - /app/kf-ci
     ports:
       - "8083:8083"
     restart: always

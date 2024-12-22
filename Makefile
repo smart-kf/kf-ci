@@ -1,7 +1,7 @@
 .PHONY: copy-config build run mv-tpl build-image reload
 
 build:
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/ci main.go
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/kf-ci main.go
 
 build-image:build
 	@docker build -t kf-ci .
