@@ -12,12 +12,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
 
 var buildMap = sync.Map{}
 var config Config
+var lastBuildTimeMap = sync.Map{}
+var lastDeployTimeMap = sync.Map{}
 
 var mu sync.RWMutex
 var conns = make(map[string][]*websocket.Conn)
@@ -26,12 +29,16 @@ type Config struct {
 	Services []Services `json:"services"`
 }
 type Services struct {
-	Id           string `json:"id"`
-	Name         string `json:"name"`
-	BuildScript  string `json:"buildScript"`
-	DeployScript string `json:"deployScript"`
-	Status       string `json:"-"`
-	Path         string `json:"path"`
+	Id             string `json:"id"`
+	Name           string `json:"name"`
+	BuildScript    string `json:"buildScript"`
+	DeployScript   string `json:"deployScript"`
+	Status         string `json:"-"`
+	Path           string `json:"path"`
+	LastBuild      string `json:"lastBuild"`
+	LastDeploy     string `json:"lastDeploy"`
+	LastBuildHash  string `json:"lastBuildHash"`
+	LastDeployHash string `json:"lastDeployHash"`
 }
 
 var configFile string
@@ -56,13 +63,22 @@ func main() {
 			if !ok {
 				status = "未构建"
 			}
-			svc = append(svc, &Services{
+			x := &Services{
 				Id:           s.Id,
 				Name:         s.Name,
 				BuildScript:  s.BuildScript,
 				DeployScript: s.DeployScript,
 				Status:       status.(string),
-			})
+			}
+			buildTime, ok := lastBuildTimeMap.Load(s.Id)
+			if ok {
+				x.LastBuild = buildTime.(time.Time).Format("2006-01-02 15:04:05")
+			}
+			deployTime, ok := lastDeployTimeMap.Load(s.Id)
+			if ok {
+				x.LastDeploy = deployTime.(time.Time).Format("2006-01-02 15:04:05")
+			}
+			svc = append(svc, x)
 		}
 
 		ctx.HTML(200, "index.gohtml", gin.H{
@@ -154,7 +170,10 @@ func main() {
 		logs := filepath.Join("logs", fmt.Sprintf("%s.%s.log", id, typ))
 		data, err := ioutil.ReadFile(logs)
 		if err == nil {
-			conn.WriteMessage(websocket.TextMessage, data)
+			// read multiples lines and send to client.
+			for _, line := range strings.Split(string(data), "\n") {
+				conn.WriteMessage(websocket.TextMessage, []byte(line))
+			}
 		}
 		go func() {
 			defer func() {
@@ -275,6 +294,8 @@ func build(s *Services) {
 		return
 	}
 
+	lastBuildTimeMap.Store(s.Id, time.Now())
+
 	deploy(s)
 }
 
@@ -349,6 +370,7 @@ func deploy(s *Services) {
 	if err := cmd.Wait(); err != nil {
 		broadCast(s.Id, fmt.Sprintf("执行命令失败: %s", err.Error()))
 	}
+	lastDeployTimeMap.Store(s.Id, time.Now())
 }
 
 type GithubHook struct {
