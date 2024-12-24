@@ -3,7 +3,7 @@
 build:
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/kf-ci main.go
 
-build-image:build
+build-image:
 	@docker build -t kf-ci .
 
 reload:
