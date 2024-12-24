@@ -43,9 +43,10 @@ services:
       rm -rf ./*
       USERNAME="smart-kf"
       REPO="goim2"
+      TAR_NAME="goim.tar.gz"
       # 获取最新release的信息
       LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$USERNAME/$REPO/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
-      wget https://github.com/$USERNAME/$REPO/releases/download/$LATEST_RELEASE/dist.tar.gz
+      wget https://github.com/$USERNAME/$REPO/releases/download/$LATEST_RELEASE/$TAR_NAME
       rm -rf bin
       tar -zxvf goim.tar.gz
       # 构建镜像
