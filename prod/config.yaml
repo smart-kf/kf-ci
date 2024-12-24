@@ -48,7 +48,7 @@ services:
       LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$USERNAME/$REPO/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
       wget https://github.com/$USERNAME/$REPO/releases/download/$LATEST_RELEASE/$TAR_NAME
       rm -rf bin
-      tar -zxvf goim.tar.gz
+      tar -zxvf $TAR_NAME
       # 构建镜像
       make build-image
-      rm -rf goim.tar.gz
+      rm -rf $TAR_NAME
