@@ -9,7 +9,7 @@ services:
       LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$USERNAME/$REPO/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
       wget https://github.com/$USERNAME/$REPO/releases/download/$LATEST_RELEASE/app.tar.gz
       tar -zxvf app.tar.gz 
-      rm -rf bin
+      rm -rf bin && mkdir -p bin
       mv app bin/
       make build-image
     deployScript: |
