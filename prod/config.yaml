@@ -15,6 +15,7 @@ services:
       tar -zxvf $TAR_NAME
       make build-image
       rm -rf bin
+      rm -rf $TAR_NAME
     deployScript: |
       docker compose stop && docker compose rm -f && docker compose up -d
   - id: kf-manager-dist
