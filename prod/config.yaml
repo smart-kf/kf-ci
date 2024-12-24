@@ -13,9 +13,8 @@ services:
       echo "download file: $URL"
       curl -o $TAR_NAME -sSL https://github.com/$USERNAME/$REPO/releases/download/$LATEST_RELEASE/$TAR_NAME
       tar -zxvf $TAR_NAME
-      rm -rf $TAR_NAME
-      mv app bin/
       make build-image
+      rm -rf bin
     deployScript: |
       docker compose stop && docker compose rm -f && docker compose up -d
   - id: kf-manager-dist
