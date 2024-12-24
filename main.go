@@ -132,7 +132,7 @@ func main() {
 			ctx.AbortWithError(400, errors.New("repo is empty"))
 			return
 		}
-		fmt.Println("receive hook: ", req.Repo, req.Tag, req.AssetURL)
+		fmt.Println("receive hook: ", req.Repo, req.Tag)
 		for _, s := range config.Services {
 			if s.Name == req.Repo {
 				fmt.Println("build and deploy by github hook")
