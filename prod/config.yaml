@@ -33,3 +33,21 @@ services:
       set -ex
       git pull
       echo 'already deployed'
+
+  - id: goim
+    name: smart-kf/goim2
+    path: /www/goim2
+    buildScript: |
+      git pull
+      set -ex
+      rm -rf ./*
+      USERNAME="smart-kf"
+      REPO="goim2"
+      # 获取最新release的信息
+      LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$USERNAME/$REPO/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
+      wget https://github.com/smart-kf/kf-manager/releases/download/$LATEST_RELEASE/dist.tar.gz
+      rm -rf bin
+      tar -zxvf goim.tar.gz
+      # 构建镜像
+      make build-image
+      rm -rf goim.tar.gz
