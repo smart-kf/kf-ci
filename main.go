@@ -118,9 +118,8 @@ func main() {
 	})
 
 	type Release struct {
-		AssetURL string `json:"asset_url"`
-		Repo     string `json:"repo"`
-		Tag      string `json:"tag"`
+		Repo string `json:"repo"`
+		Tag  string `json:"tag"`
 	}
 
 	g.POST("/release", func(ctx *gin.Context) {
@@ -131,10 +130,6 @@ func main() {
 		}
 		if req.Repo == "" {
 			ctx.AbortWithError(400, errors.New("repo is empty"))
-			return
-		}
-		if req.AssetURL == "" {
-			ctx.AbortWithError(400, errors.New("asset url is empty"))
 			return
 		}
 		fmt.Println("receive hook: ", req.Repo, req.Tag, req.AssetURL)
