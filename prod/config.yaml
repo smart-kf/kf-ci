@@ -40,6 +40,7 @@ services:
     name: smart-kf/goim2
     path: /www/goim2
     buildScript: |
+      pwd && ls -al
       git pull
       set -ex
       USERNAME="smart-kf"
@@ -53,3 +54,6 @@ services:
       # 构建镜像
       make build-image
       rm -rf $TAR_NAME
+    deployScript: |
+      pwd
+      make reload
