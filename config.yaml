@@ -10,17 +10,45 @@ services:
   - id: kf-manager-dist
     name: kf-manager-dist
     path: /www/kf-manager-dist
-    buildScript: |
-      set -ex
-      currentPath=$(pwd)
-      rm -rf /tmp/kf-manager
-      cd /tmp/kf-manager
-      wget -o dist.tar.gz $ASSET_URL
-      tar -zxvf dist.tar.gz
-      rm -rf $currentPath
-      mkdir -p $currentPath
-      mv dist/* $currentPath
+    buildScript: | 
+      echo 'please push a tag'
     deployScript: |
-      set -ex
-      git pull
-      echo 'already deployed'
+      REPO="smart-kf/kf-manager"
+      TEMP_DIR=$(mktemp -d)
+      DEPLOY_DIR="/www/kf-manager-dist"
+      BACKUP_DIR="/tmp/backup"
+      ASSET_NAME="dist.tar.gz"
+
+      # 获取最新 release 信息
+      latest_release=$(curl -s "https://api.github.com/repos/$REPO/releases/latest")
+      download_url=$(echo "$latest_release" | jq -r ".assets[] | select(.name == \"$ASSET_NAME\") | .url")
+
+      # 检查下载链接是否存在
+      if [ -z "$download_url" ]; then
+        echo "Download URL not found!"
+        exit 1
+      fi
+
+      echo "Downloading latest release from $download_url..."
+      curl -L -o "$TEMP_DIR/$ASSET_NAME" "$download_url"
+
+      # 解压文件
+      echo "Extracting $ASSET_NAME..."
+      tar -xzf "$TEMP_DIR/$ASSET_NAME" -C "$TEMP_DIR"
+
+      # 滚动更新
+      echo "Updating deployment to $DEPLOY_DIR..."
+      # 备份当前内容
+      if [ -d "$DEPLOY_DIR" ]; then
+        echo "Backing up current deployment to $BACKUP_DIR..."
+        mv "$DEPLOY_DIR" "$BACKUP_DIR"
+      fi
+
+      # 移动新内容到目标目录
+      mv "$TEMP_DIR/dist/*" "$DEPLOY_DIR/"
+
+      # 清理临时文件
+      rm -rf "$TEMP_DIR"
+
+      # 可选：检查更新是否成功
+      echo "Deployment successful!"

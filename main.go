@@ -253,11 +253,7 @@ func findById(id string) (*Services, bool) {
 	return nil, false
 }
 
-type BuildArg struct {
-	AssetURL string
-}
-
-func build(s *Services, args BuildArg) {
+func build(s *Services) {
 	defer func() {
 		recover()
 	}()
@@ -267,8 +263,7 @@ func build(s *Services, args BuildArg) {
 	}
 	buildMap.Store(s.Id, "构建中")
 
-	env := os.Environ()                           // 获取当前的环境变量
-	env = append(env, "ASSET_URL="+args.AssetURL) // 添加新的环境变量
+	env := os.Environ() // 获取当前的环境变量
 	cmd := exec.Command("bash", "-c", s.BuildScript)
 	cmd.Env = env // 设置命令的环境变量
 	cmd.Dir = s.Path
