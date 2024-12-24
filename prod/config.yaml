@@ -42,7 +42,6 @@ services:
     buildScript: |
       git pull
       set -ex
-      rm -rf ./*
       USERNAME="smart-kf"
       REPO="goim2"
       TAR_NAME="goim.tar.gz"
