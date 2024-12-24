@@ -6,10 +6,11 @@ services:
       git pull
       USERNAME="smart-kf"
       REPO="kf-api"
+      TAR_NAME="app.tar.gz"
       LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$USERNAME/$REPO/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
-      wget -o app.tar.gz https://github.com/$USERNAME/$REPO/releases/download/$LATEST_RELEASE/app.tar.gz
-      tar -zxvf app.tar.gz 
-      rm -rf app.tar.gz
+      curl -o TAR_NAME -sSL https://github.com/$USERNAME/$REPO/releases/download/$LATEST_RELEASE/$TAR_NAME
+      tar -zxvf $TAR_NAME
+      rm -rf $TAR_NAME
       rm -rf bin && mkdir -p bin
       mv app bin/
       make build-image
@@ -23,12 +24,13 @@ services:
       rm -rf ./*
       USERNAME="smart-kf"
       REPO="kf-manager"
+      TAR_NAME="dist.tar.gz"
       # 获取最新release的信息
       LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$USERNAME/$REPO/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
-      wget https://github.com/smart-kf/kf-manager/releases/download/$LATEST_RELEASE/dist.tar.gz
+      curl -o TAR_NAME -sSL https://github.com/smart-kf/kf-manager/releases/download/$LATEST_RELEASE/$TAR_NAME
       tar -zxvf dist.tar.gz 
       mv dist/* .
-      rm -rf dist dist.tar.gz
+      rm -rf dist $TAR_NAME
     deployScript: |
       set -ex
       git pull
@@ -46,7 +48,7 @@ services:
       TAR_NAME="goim.tar.gz"
       # 获取最新release的信息
       LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$USERNAME/$REPO/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
-      wget https://github.com/$USERNAME/$REPO/releases/download/$LATEST_RELEASE/$TAR_NAME
+      curl -o TAR_NAME -sSL https://github.com/$USERNAME/$REPO/releases/download/$LATEST_RELEASE/$TAR_NAME
       rm -rf bin
       tar -zxvf $TAR_NAME
       # 构建镜像
