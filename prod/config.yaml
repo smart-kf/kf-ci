@@ -3,6 +3,7 @@ services:
     name: smart-kf/kf-api
     path: /www/kf-api
     buildScript: |
+      git pull
       USERNAME="smart-kf"
       REPO="kf-api"
       LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$USERNAME/$REPO/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
