@@ -36,7 +36,6 @@ services:
       rm -rf dist $TAR_NAME
     deployScript: |
       set -ex
-      git pull
       echo 'already deployed'
 
   - id: goim
