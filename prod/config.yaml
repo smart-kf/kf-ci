@@ -13,7 +13,15 @@ services:
     path: /www/kf-manager-dist
     buildScript: |
       set -ex
-      git pull
+      rm -rf ./*
+      USERNAME="smart-kf"
+      REPO="kf-manager"
+      # 获取最新release的信息
+      LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$USERNAME/$REPO/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
+      wget https://github.com/smart-kf/kf-manager/releases/download/$LATEST_RELEASE/dist.tar.gz
+      tar -zxvf dist.tar.gz 
+      mv dist/* .
+      rm -rf dist dist.tar.gz
     deployScript: |
       set -ex
       git pull
