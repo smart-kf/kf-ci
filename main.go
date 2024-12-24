@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -116,6 +117,36 @@ func main() {
 		})
 	})
 
+	type Release struct {
+		AssetURL string `json:"asset_url"`
+		Repo     string `json:"repo"`
+		Tag      string `json:"tag"`
+	}
+
+	g.POST("/release", func(ctx *gin.Context) {
+		var req Release
+		if err := ctx.ShouldBind(&req); err != nil {
+			ctx.AbortWithError(400, err)
+			return
+		}
+		if req.Repo == "" {
+			ctx.AbortWithError(400, errors.New("repo is empty"))
+			return
+		}
+		if req.AssetURL == "" {
+			ctx.AbortWithError(400, errors.New("asset url is empty"))
+			return
+		}
+		fmt.Println("receive hook: ", req.Repo, req.Tag, req.AssetURL)
+		for _, s := range config.Services {
+			if s.Name == req.Repo {
+				fmt.Println("build and deploy by github hook")
+				go build(&s)
+			}
+		}
+		ctx.String(200, "ok")
+	})
+
 	g.Any("/githook", func(ctx *gin.Context) {
 		var req GithubHook
 		if err := ctx.ShouldBind(&req); err != nil {
@@ -222,7 +253,11 @@ func findById(id string) (*Services, bool) {
 	return nil, false
 }
 
-func build(s *Services) {
+type BuildArg struct {
+	AssetURL string
+}
+
+func build(s *Services, args BuildArg) {
 	defer func() {
 		recover()
 	}()
@@ -232,7 +267,10 @@ func build(s *Services) {
 	}
 	buildMap.Store(s.Id, "构建中")
 
+	env := os.Environ()                           // 获取当前的环境变量
+	env = append(env, "ASSET_URL="+args.AssetURL) // 添加新的环境变量
 	cmd := exec.Command("bash", "-c", s.BuildScript)
+	cmd.Env = env // 设置命令的环境变量
 	cmd.Dir = s.Path
 	// 获取标准输出和标准错误的管道
 	stdout, err := cmd.StdoutPipe()

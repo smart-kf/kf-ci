@@ -12,7 +12,14 @@ services:
     path: /www/kf-manager-dist
     buildScript: |
       set -ex
-      git pull
+      currentPath=$(pwd)
+      rm -rf /tmp/kf-manager
+      cd /tmp/kf-manager
+      wget -o dist.tar.gz $ASSET_URL
+      tar -zxvf dist.tar.gz
+      rm -rf $currentPath
+      mkdir -p $currentPath
+      mv dist/* $currentPath
     deployScript: |
       set -ex
       git pull
