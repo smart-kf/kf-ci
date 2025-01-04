@@ -38,16 +38,16 @@ services:
       set -ex
       echo 'already deployed'
 
-  - id: goim
-    name: smart-kf/goim2
-    path: /www/goim2
+  - id: socket-server
+    name: smart-kf/socket-server
+    path: /www/socket-server
     buildScript: |
       pwd && ls -al
       git pull
       set -ex
       USERNAME="smart-kf"
-      REPO="goim2"
-      TAR_NAME="goim.tar.gz"
+      REPO="socket-server"
+      TAR_NAME="socket-server.tar.gz"
       # 获取最新release的信息
       LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$USERNAME/$REPO/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
       curl -o $TAR_NAME -sSL https://github.com/$USERNAME/$REPO/releases/download/$LATEST_RELEASE/$TAR_NAME
