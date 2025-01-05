@@ -60,3 +60,18 @@ services:
       git pull
       pwd
       make reload
+
+  - id: socket-server-manaue
+    name: socket-server-manaue
+    path: /www/socket-server
+    buildScript: |
+      pwd && ls -al
+      git pull
+      set -ex
+      # 构建镜像
+      make build
+      make build-image
+    deployScript: |
+      git pull
+      pwd
+      make reload
