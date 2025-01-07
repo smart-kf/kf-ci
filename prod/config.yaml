@@ -75,3 +75,22 @@ services:
       git pull
       pwd
       make reload
+
+  - id: kf-mobile
+    name: smart-kf/kf-mobile
+    path: /www/kf-mobile
+    buildScript: |
+      set -ex
+      rm -rf ./*
+      USERNAME="smart-kf"
+      REPO="kf-mobile"
+      TAR_NAME="dist.tar.gz"
+      # 获取最新release的信息
+      LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$USERNAME/$REPO/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
+      curl -o $TAR_NAME -sSL https://github.com/smart-kf/kf-manager/releases/download/$LATEST_RELEASE/$TAR_NAME
+      tar -zxvf dist.tar.gz 
+      mv dist/* .
+      rm -rf dist $TAR_NAME
+    deployScript: |
+      set -ex
+      echo 'already deployed'
