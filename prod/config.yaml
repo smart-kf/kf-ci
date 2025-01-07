@@ -87,7 +87,7 @@ services:
       TAR_NAME="dist.tar.gz"
       # 获取最新release的信息
       LATEST_RELEASE=$(curl -s "https://api.github.com/repos/$USERNAME/$REPO/releases/latest" | grep "tag_name" | sed -E 's/.*"([^"]+)".*/\1/')
-      curl -o $TAR_NAME -sSL https://github.com/smart-kf/kf-manager/releases/download/$LATEST_RELEASE/$TAR_NAME
+      curl -o $TAR_NAME -sSL https://github.com/smart-kf/$REPO/releases/download/$LATEST_RELEASE/$TAR_NAME
       tar -zxvf dist.tar.gz 
       mv dist/* .
       rm -rf dist $TAR_NAME
