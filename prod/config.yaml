@@ -94,3 +94,13 @@ services:
     deployScript: |
       set -ex
       echo 'already deployed'
+
+  - id: kf-website
+    name: smart-kf/kf-website
+    path: /www/kf-website
+    buildScript: |
+      git pull
+    deployScript: |
+      git pull
+      set -ex
+      echo 'already deployed'
