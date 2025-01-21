@@ -4,9 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
-	"github.com/make-money-fast/xconfig"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,6 +13,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
+	"github.com/make-money-fast/xconfig"
 )
 
 var buildMap = sync.Map{}
@@ -57,116 +58,136 @@ func main() {
 	g := gin.Default()
 	g.LoadHTMLGlob("web/*.gohtml")
 
-	g.GET("/", func(ctx *gin.Context) {
-		svc := make([]*Services, 0, len(config.Services))
-		for _, s := range config.Services {
-			status, ok := buildMap.Load(s.Id)
+	g.GET(
+		"/", func(ctx *gin.Context) {
+			svc := make([]*Services, 0, len(config.Services))
+			for _, s := range config.Services {
+				status, ok := buildMap.Load(s.Id)
+				if !ok {
+					status = "未构建"
+				}
+				x := &Services{
+					Id:           s.Id,
+					Name:         s.Name,
+					BuildScript:  s.BuildScript,
+					DeployScript: s.DeployScript,
+					Status:       status.(string),
+				}
+				buildTime, ok := lastBuildTimeMap.Load(s.Id)
+				if ok {
+					t := buildTime.(time.Time)
+					t = t.In(time.UTC).Add(8 * time.Hour)
+					x.LastBuild = t.Format("2006-01-02 15:04:05")
+				}
+				deployTime, ok := lastDeployTimeMap.Load(s.Id)
+				if ok {
+					t := deployTime.(time.Time)
+					t = t.In(time.UTC).Add(8 * time.Hour)
+					x.LastDeploy = t.Format("2006-01-02 15:04:05")
+				}
+				svc = append(svc, x)
+			}
+
+			ctx.HTML(
+				200, "index.gohtml", gin.H{
+					"services": svc,
+				},
+			)
+		},
+	)
+
+	g.GET(
+		"/build", func(ctx *gin.Context) {
+			id := ctx.Query("id")
+			service, ok := findById(id)
 			if !ok {
-				status = "未构建"
+				ctx.Redirect(302, "/")
+				return
 			}
-			x := &Services{
-				Id:           s.Id,
-				Name:         s.Name,
-				BuildScript:  s.BuildScript,
-				DeployScript: s.DeployScript,
-				Status:       status.(string),
-			}
-			buildTime, ok := lastBuildTimeMap.Load(s.Id)
-			if ok {
-				x.LastBuild = buildTime.(time.Time).Format("2006-01-02 15:04:05")
-			}
-			deployTime, ok := lastDeployTimeMap.Load(s.Id)
-			if ok {
-				x.LastDeploy = deployTime.(time.Time).Format("2006-01-02 15:04:05")
-			}
-			svc = append(svc, x)
-		}
-
-		ctx.HTML(200, "index.gohtml", gin.H{
-			"services": svc,
-		})
-	})
-
-	g.GET("/build", func(ctx *gin.Context) {
-		id := ctx.Query("id")
-		service, ok := findById(id)
-		if !ok {
+			go build(service)
 			ctx.Redirect(302, "/")
-			return
-		}
-		go build(service)
-		ctx.Redirect(302, "/")
-	})
-	g.GET("/deploy", func(ctx *gin.Context) {
-		id := ctx.Query("id")
-		service, ok := findById(id)
-		if !ok {
+		},
+	)
+	g.GET(
+		"/deploy", func(ctx *gin.Context) {
+			id := ctx.Query("id")
+			service, ok := findById(id)
+			if !ok {
+				ctx.Redirect(302, "/")
+				return
+			}
+			go deploy(service)
 			ctx.Redirect(302, "/")
-			return
-		}
-		go deploy(service)
-		ctx.Redirect(302, "/")
-	})
+		},
+	)
 
-	g.GET("/logs", func(ctx *gin.Context) {
-		id := ctx.Query("id")
-		typ := ctx.Query("typ")
-		ctx.HTML(200, "log.gohtml", gin.H{
-			"id":  id,
-			"typ": typ,
-		})
-	})
+	g.GET(
+		"/logs", func(ctx *gin.Context) {
+			id := ctx.Query("id")
+			typ := ctx.Query("typ")
+			ctx.HTML(
+				200, "log.gohtml", gin.H{
+					"id":  id,
+					"typ": typ,
+				},
+			)
+		},
+	)
 
 	type Release struct {
 		Repo string `json:"repo"`
 		Tag  string `json:"tag"`
 	}
 
-	g.POST("/release", func(ctx *gin.Context) {
-		var req Release
-		if err := ctx.ShouldBind(&req); err != nil {
-			ctx.AbortWithError(400, err)
-			return
-		}
-		if req.Repo == "" {
-			ctx.AbortWithError(400, errors.New("repo is empty"))
-			return
-		}
-		fmt.Println("receive hook: ", req.Repo, req.Tag)
-		for _, s := range config.Services {
-			if s.Name == req.Repo {
-				fmt.Println("build and deploy by github hook")
-				go build(&s)
+	g.POST(
+		"/release", func(ctx *gin.Context) {
+			var req Release
+			if err := ctx.ShouldBind(&req); err != nil {
+				ctx.AbortWithError(400, err)
+				return
 			}
-		}
-		ctx.String(200, "ok")
-	})
-
-	g.Any("/githook", func(ctx *gin.Context) {
-		var req GithubHook
-		if err := ctx.ShouldBind(&req); err != nil {
-			ctx.AbortWithError(400, err)
-			return
-		}
-
-		fmt.Println("receive hook: ", req.Repository.Name, req.Ref)
-		ref := req.Ref
-		if !isMaster(ref) {
+			if req.Repo == "" {
+				ctx.AbortWithError(400, errors.New("repo is empty"))
+				return
+			}
+			fmt.Println("receive hook: ", req.Repo, req.Tag)
+			for _, s := range config.Services {
+				if s.Name == req.Repo {
+					fmt.Println("build and deploy by github hook")
+					go build(&s)
+				}
+			}
 			ctx.String(200, "ok")
-			return
-		}
+		},
+	)
 
-		repoName := req.Repository.Name
-
-		for _, s := range config.Services {
-			if s.Name == repoName {
-				fmt.Println("build and deploy by github hook")
-				go build(&s)
+	g.Any(
+		"/githook", func(ctx *gin.Context) {
+			var req GithubHook
+			if err := ctx.ShouldBind(&req); err != nil {
+				ctx.AbortWithError(400, err)
+				return
 			}
-		}
 
-		ctx.String(200, "ok")
-	})
+			fmt.Println("receive hook: ", req.Repository.Name, req.Ref)
+			ref := req.Ref
+			if !isMaster(ref) {
+				ctx.String(200, "ok")
+				return
+			}
+
+			repoName := req.Repository.Name
+
+			for _, s := range config.Services {
+				if s.Name == repoName {
+					fmt.Println("build and deploy by github hook")
+					go build(&s)
+				}
+			}
+
+			ctx.String(200, "ok")
+		},
+	)
 
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -174,54 +195,56 @@ func main() {
 		},
 	}
 
-	g.GET("/ws", func(ctx *gin.Context) {
-		conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		id := ctx.Query("id")
-		typ := ctx.Query("typ")
-		mu.Lock()
-		if _, ok := conns[id]; !ok {
-			conns[id] = make([]*websocket.Conn, 0)
-		}
-		conns[id] = append(conns[id], conn)
-		mu.Unlock()
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		// push already flushed logs
-		logs := filepath.Join("logs", fmt.Sprintf("%s.%s.log", id, typ))
-		data, err := ioutil.ReadFile(logs)
-		if err == nil {
-			// read multiples lines and send to client.
-			for _, line := range strings.Split(string(data), "\n") {
-				conn.WriteMessage(websocket.TextMessage, []byte(line))
+	g.GET(
+		"/ws", func(ctx *gin.Context) {
+			conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+			if err != nil {
+				fmt.Println(err)
+				return
 			}
-		}
-		go func() {
-			defer func() {
-				mu.Lock()
-				for idx, c := range conns[id] {
-					if c == conn {
-						conns[id][idx] = nil
-						conns[id] = append(conns[id][:idx], conns[id][idx+1:]...)
+			id := ctx.Query("id")
+			typ := ctx.Query("typ")
+			mu.Lock()
+			if _, ok := conns[id]; !ok {
+				conns[id] = make([]*websocket.Conn, 0)
+			}
+			conns[id] = append(conns[id], conn)
+			mu.Unlock()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			// push already flushed logs
+			logs := filepath.Join("logs", fmt.Sprintf("%s.%s.log", id, typ))
+			data, err := ioutil.ReadFile(logs)
+			if err == nil {
+				// read multiples lines and send to client.
+				for _, line := range strings.Split(string(data), "\n") {
+					conn.WriteMessage(websocket.TextMessage, []byte(line))
+				}
+			}
+			go func() {
+				defer func() {
+					mu.Lock()
+					for idx, c := range conns[id] {
+						if c == conn {
+							conns[id][idx] = nil
+							conns[id] = append(conns[id][:idx], conns[id][idx+1:]...)
+						}
+					}
+					mu.Unlock()
+					conn.Close()
+				}()
+				for {
+					conn.SetReadDeadline(time.Now().Add(1 * time.Minute))
+					_, _, err := conn.ReadMessage()
+					if err != nil {
+						return
 					}
 				}
-				mu.Unlock()
-				conn.Close()
 			}()
-			for {
-				conn.SetReadDeadline(time.Now().Add(1 * time.Minute))
-				_, _, err := conn.ReadMessage()
-				if err != nil {
-					return
-				}
-			}
-		}()
-	})
+		},
+	)
 
 	g.Run(":8083")
 }
