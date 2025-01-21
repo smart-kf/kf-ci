@@ -19,6 +19,18 @@ services:
     deployScript: |
       git pull
       docker compose stop && docker compose rm -f && docker compose up -d
+  - id: kf-api-手动部署
+    name: kf-api-手动部署
+    path: /www/kf-api
+    buildScript: |
+      git pull
+      make build
+      make build-image
+      rm -rf bin
+      rm -rf $TAR_NAME
+    deployScript: |
+      git pull
+      docker compose stop && docker compose rm -f && docker compose up -d
   - id: kf-manager-dist
     name: smart-kf/kf-manager
     path: /www/kf-manager-dist
