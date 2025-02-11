@@ -50,7 +50,7 @@ services:
       set -ex
       echo 'already deployed'
 
-  - id: kf-manager-dist
+  - id: kf-bill
     name: smart-kf/kf-bill
     path: /www/kf-bill
     buildScript: |
