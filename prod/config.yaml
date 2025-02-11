@@ -146,4 +146,4 @@ services:
       rm -rf bin
     deployScript: |
       git pull
-      docker compose stop && docker compose rm -f && docker compose up -d
+      make reload 
