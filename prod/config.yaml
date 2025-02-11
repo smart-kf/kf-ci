@@ -116,3 +116,15 @@ services:
       git pull
       set -ex
       echo 'already deployed'
+
+  - id: kf-payment-手动部署
+    name: smart-kf/bepusdt-手动部署
+    path: /www/kf-payment
+    buildScript: |
+      git pull
+      make build
+      make build-image
+      rm -rf bin
+    deployScript: |
+      git pull
+      docker compose stop && docker compose rm -f && docker compose up -d
